@@ -3,21 +3,29 @@ const Property = require("../models/Property");
 // Create Property (Landlord only)
 exports.createProperty = async (req, res) => {
   try {
-    console.log("BODY:", req.body);
-    console.log("FILE:", req.file);
+    const { title, address, price } = req.body;
+
+    // ✅ Cloudinary gives URL in req.file.path
+    const image = req.file?.path || "";
 
     const property = await Property.create({
-      title: req.body.title,
-      address: req.body.address,
-      price: req.body.price,
-      image: req.file ? req.file.path : "",
+      title,
+      address,
+      price,
+      coverImage: image, // ✅ match frontend
       landlord_id: req.user.id,
     });
 
-    res.json(property);
+    res.status(201).json({
+      success: true,
+      data: property,
+    });
   } catch (error) {
     console.error("ERROR:", error);
-    res.status(500).json(error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to create property",
+    });
   }
 };
 

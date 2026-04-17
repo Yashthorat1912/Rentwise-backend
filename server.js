@@ -29,8 +29,6 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/maintenance", require("./routes/maintenanceRoutes"));
 app.use("/api/messages", require("./routes/messageRoutes"));
 
-app.use("/uploads", express.static("uploads"));
-
 // ✅ IMPORTANT: create server FIRST
 const http = require("http");
 const server = http.createServer(app);

@@ -1,4 +1,8 @@
 const MaintenanceRequest = require("../models/MaintenanceRequest");
+const sendNotification = require("../utils/sendNotification");
+const Lease = require("../models/Lease");
+const Property = require("../models/Property");
+const User = require("../models/User");
 
 // ✅ Create maintenance request
 exports.createRequest = async (req, res) => {
@@ -8,7 +12,6 @@ exports.createRequest = async (req, res) => {
 
     const { lease_id, title, description, urgency } = req.body;
 
-    // ✅ extract filenames
     const fileNames = req.files ? req.files.map((file) => file.filename) : [];
 
     const request = await MaintenanceRequest.create({
@@ -16,8 +19,19 @@ exports.createRequest = async (req, res) => {
       title,
       description,
       urgency,
-      files: fileNames, // ✅ store here
+      files: fileNames,
     });
+
+    // ✅ 🔔 SEND NOTIFICATION TO LANDLORD
+    const lease = await Lease.findById(lease_id);
+    const property = await Property.findById(lease.property_id);
+    const landlord = await User.findById(property.landlord_id);
+
+    await sendNotification(
+      landlord?.fcmToken,
+      "New Maintenance Request",
+      `${title} - ${urgency}`,
+    );
 
     res.json(request);
   } catch (err) {
@@ -57,18 +71,28 @@ exports.getRequests = async (req, res) => {
 
 exports.updateStatus = async (req, res) => {
   try {
-    const io = req.app.get("io"); // ✅ GET IO
+    const io = req.app.get("io");
 
     const { status } = req.body;
 
     const request = await MaintenanceRequest.findByIdAndUpdate(
       req.params.id,
       { status },
-      { returnDocument: "after" }, // ✅ FIX WARNING
+      { new: true },
     );
 
-    // ✅ REAL-TIME UPDATE
+    // ✅ SOCKET UPDATE
     io.to(request.lease_id.toString()).emit("maintenance_updated", request);
+
+    // ✅ 🔔 SEND NOTIFICATION TO TENANT
+    const lease = await Lease.findById(request.lease_id);
+    const tenant = await User.findById(lease.tenant_id);
+
+    await sendNotification(
+      tenant?.fcmToken,
+      "Request Update",
+      `Status changed to ${status}`,
+    );
 
     res.json(request);
   } catch (error) {

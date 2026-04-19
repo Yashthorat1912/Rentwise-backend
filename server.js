@@ -5,7 +5,9 @@ const Lease = require("./models/Lease");
 const connectDB = require("./config/db");
 
 const maintenanceRoutes = require("./routes/maintenanceRoutes");
-
+const notificationRoutes = require("./routes/notificationRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 dotenv.config();
 connectDB();
 
@@ -20,6 +22,8 @@ app.get("/", (req, res) => {
   res.send("RentWise API running");
 });
 
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/payments", paymentRoutes);
 app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/properties", require("./routes/propertyRoutes"));
@@ -29,6 +33,7 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/maintenance", require("./routes/maintenanceRoutes"));
 app.use("/api/messages", require("./routes/messageRoutes"));
 
+app.use("/api/notifications", notificationRoutes);
 // ✅ IMPORTANT: create server FIRST
 const http = require("http");
 const server = http.createServer(app);

@@ -6,7 +6,6 @@ const paymentSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Lease",
       required: true,
-      index: true,
     },
 
     amount: {
@@ -18,6 +17,11 @@ const paymentSchema = new mongoose.Schema(
       type: String,
       enum: ["successful", "failed"],
       default: "successful",
+    },
+
+    payment_date: {
+      type: Date,
+      default: Date.now,
     },
   },
   { timestamps: true },

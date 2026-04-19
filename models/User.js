@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema(
     otpExpiry: {
       type: Date,
     },
+
+    fcmToken: {
+      type: String,
+    },
   },
   { timestamps: true },
 );

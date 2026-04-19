@@ -7,7 +7,6 @@ const connectDB = require("./config/db");
 const maintenanceRoutes = require("./routes/maintenanceRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
-const notificationRoutes = require("./routes/notificationRoutes");
 dotenv.config();
 connectDB();
 

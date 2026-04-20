@@ -11,7 +11,7 @@ exports.createRequest = async (req, res) => {
     console.log("FILES:", req.files);
 
     const { lease_id, title, description, urgency } = req.body;
-    const fileUrls = req.files ? req.files.map((file) => file.secure_url) : [];
+    const fileUrls = req.files ? req.files.map((file) => file.path) : [];
 
     const request = await MaintenanceRequest.create({
       lease_id,

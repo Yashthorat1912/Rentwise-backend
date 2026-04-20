@@ -27,9 +27,9 @@ app.use("/api/maintenance", maintenanceRoutes);
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/properties", require("./routes/propertyRoutes"));
 app.use("/api/leases", require("./routes/leaseRoutes"));
-app.use("/api/payments", require("./routes/paymentRoutes"));
+
 app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/maintenance", require("./routes/maintenanceRoutes"));
+
 app.use("/api/messages", require("./routes/messageRoutes"));
 
 // ✅ IMPORTANT: create server FIRST

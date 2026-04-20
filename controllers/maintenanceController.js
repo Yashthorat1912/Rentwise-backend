@@ -22,16 +22,29 @@ exports.createRequest = async (req, res) => {
       files: fileNames,
     });
 
-    // ✅ 🔔 SEND NOTIFICATION TO LANDLORD
+    // ✅ GET RELATED DATA
     const lease = await Lease.findById(lease_id);
-    const property = await Property.findById(lease.property_id);
-    const landlord = await User.findById(property.landlord_id);
+    if (!lease) return res.status(404).json("Lease not found");
 
-    await sendNotification(
-      landlord?.fcmToken,
-      "New Maintenance Request",
-      `${title} - ${urgency}`,
-    );
+    const property = await Property.findById(lease.property_id);
+    if (!property) return res.status(404).json("Property not found");
+
+    const landlord = await User.findById(property.landlord_id);
+    if (!landlord) return res.status(404).json("Landlord not found");
+
+    // ✅ 🔔 NOTIFICATION TO LANDLORD
+    await sendNotification({
+      userId: landlord._id,
+      token: landlord?.fcmToken,
+      type: "MAINTENANCE_CREATED",
+      title: "New Maintenance Request",
+      body: `${title} - ${urgency}`,
+      meta: {
+        requestId: request._id,
+        propertyId: property._id,
+        leaseId: lease._id,
+      },
+    });
 
     res.json(request);
   } catch (err) {
@@ -69,10 +82,10 @@ exports.getRequests = async (req, res) => {
   }
 };
 
+// ✅ Update status
 exports.updateStatus = async (req, res) => {
   try {
     const io = req.app.get("io");
-
     const { status } = req.body;
 
     const request = await MaintenanceRequest.findByIdAndUpdate(
@@ -81,18 +94,37 @@ exports.updateStatus = async (req, res) => {
       { new: true },
     );
 
-    // ✅ SOCKET UPDATE
+    if (!request) return res.status(404).json("Request not found");
+
+    // ✅ SOCKET UPDATE (REALTIME)
     io.to(request.lease_id.toString()).emit("maintenance_updated", request);
 
-    // ✅ 🔔 SEND NOTIFICATION TO TENANT
+    // ✅ GET TENANT
     const lease = await Lease.findById(request.lease_id);
-    const tenant = await User.findById(lease.tenant_id);
+    if (!lease) return res.status(404).json("Lease not found");
 
-    await sendNotification(
-      tenant?.fcmToken,
-      "Request Update",
-      `Status changed to ${status}`,
-    );
+    const tenant = await User.findById(lease.tenant_id);
+    if (!tenant) return res.status(404).json("Tenant not found");
+
+    // ✅ DETERMINE TYPE (SMART)
+    let notificationType = "MAINTENANCE_UPDATED";
+
+    if (status === "COMPLETED") {
+      notificationType = "MAINTENANCE_PROGRESS";
+    }
+
+    // ✅ 🔔 NOTIFICATION TO TENANT
+    await sendNotification({
+      userId: tenant._id,
+      token: tenant?.fcmToken,
+      type: notificationType,
+      title: "Maintenance Update",
+      body: `Status changed to ${status}`,
+      meta: {
+        requestId: request._id,
+        leaseId: lease._id,
+      },
+    });
 
     res.json(request);
   } catch (error) {

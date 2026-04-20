@@ -22,23 +22,45 @@ exports.createPayment = async (req, res) => {
       payment_date: new Date(),
     });
 
-    // 🔔 SEND NOTIFICATION TO LANDLORD
+    // ✅ GET RELATED DATA
     const lease = await Lease.findById(lease_id);
-
     if (!lease) return res.status(404).json("Lease not found");
 
     const property = await Property.findById(lease.property_id);
-    const landlord = await User.findById(property.landlord_id);
-    const tenant = await User.findById(lease.tenant_id);
+    if (!property) return res.status(404).json("Property not found");
 
-    if (landlord?.fcmToken) {
-      await sendNotification(
-        landlord.fcmToken,
-        "💰 Rent Payment Received",
-        `${tenant.name} paid ₹${amount}`,
-        landlord._id,
-      );
-    }
+    const landlord = await User.findById(property.landlord_id);
+    if (!landlord) return res.status(404).json("Landlord not found");
+
+    const tenant = await User.findById(lease.tenant_id);
+    if (!tenant) return res.status(404).json("Tenant not found");
+
+    // ✅ 🔔 NOTIFICATION TO LANDLORD
+    await sendNotification({
+      userId: landlord._id,
+      token: landlord?.fcmToken,
+      type: "PAYMENT_SUCCESS",
+      title: "💰 Rent Payment Received",
+      body: `${tenant.name} paid ₹${amount}`,
+      meta: {
+        paymentId: payment._id,
+        leaseId: lease._id,
+        propertyId: property._id,
+      },
+    });
+
+    // ✅ 🔔 OPTIONAL: NOTIFY TENANT (confirmation)
+    await sendNotification({
+      userId: tenant._id,
+      token: tenant?.fcmToken,
+      type: "PAYMENT_SUCCESS",
+      title: "Payment Successful",
+      body: `You paid ₹${amount} successfully`,
+      meta: {
+        paymentId: payment._id,
+        leaseId: lease._id,
+      },
+    });
 
     res.json(payment);
   } catch (error) {
@@ -52,7 +74,7 @@ exports.getPayments = async (req, res) => {
   try {
     const payments = await Payment.find({
       lease_id: req.params.leaseId,
-    }).sort({ createdAt: -1 }); // latest first
+    }).sort({ createdAt: -1 });
 
     res.json(payments);
   } catch (error) {

@@ -54,22 +54,29 @@ const Message = require("./models/Message");
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  socket.on("join_room", (leaseId) => {
-    socket.join(leaseId);
+  // ✅ JOIN USER ROOM (FOR NOTIFICATIONS)
+  socket.on("join", (userId) => {
+    socket.join(userId);
+    console.log("User joined notification room:", userId);
   });
 
+  // ✅ JOIN LEASE ROOM (FOR CHAT)
+  socket.on("join_room", (leaseId) => {
+    socket.join(leaseId);
+    console.log("User joined chat room:", leaseId);
+  });
+
+  // ✅ CHAT MESSAGE HANDLING
   socket.on("send_message", async (data) => {
     try {
       const { lease_id, sender_id, content } = data;
 
-      // ❗ safety check
       if (!lease_id) {
         console.log("❌ lease_id missing");
         return;
       }
 
       const lease = await Lease.findById(lease_id);
-
       if (!lease) {
         console.log("❌ Lease not found");
         return;
@@ -89,11 +96,12 @@ io.on("connection", (socket) => {
         content,
       });
 
-      // ✅ Populate sender name
       const populated = await savedMessage.populate("sender_id", "name");
 
-      // ✅ Emit to room
+      // ✅ EMIT CHAT MESSAGE
       io.to(lease_id).emit("receive_message", populated);
+
+      // ❗ (Optional) You can also trigger notification here if needed
     } catch (err) {
       console.error("Socket Error:", err);
     }
@@ -103,6 +111,8 @@ io.on("connection", (socket) => {
     console.log("User disconnected:", socket.id);
   });
 });
+
+global.io = io;
 
 // ✅ finally start server
 const PORT = process.env.PORT || 5000;

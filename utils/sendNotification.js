@@ -1,25 +1,44 @@
 const admin = require("../config/firebase");
 const Notification = require("../models/Notification");
 
-const sendNotification = async (token, title, body, userId) => {
-  if (!token) return;
-
-  const message = {
-    notification: { title, body },
-    token,
-  };
-
+const sendNotification = async ({
+  userId,
+  token = null,
+  type = "GENERAL",
+  title,
+  body,
+  meta = {},
+}) => {
   try {
-    await admin.messaging().send(message);
-
-    // ✅ SAVE TO DATABASE
-    await Notification.create({
+    // ✅ SAVE TO DB
+    const notification = await Notification.create({
       user_id: userId,
+      type,
       title,
       body,
+      meta,
+      isRead: false,
     });
 
-    console.log("Notification sent + saved");
+    // ✅ REALTIME (Socket.IO)
+    const io = global.io;
+    if (io) {
+      io.to(userId.toString()).emit("notification", notification);
+    }
+
+    // ✅ PUSH (Firebase)
+    if (token) {
+      const message = {
+        notification: { title, body },
+        token,
+      };
+
+      await admin.messaging().send(message);
+    }
+
+    console.log("Notification saved + emitted", notification._id);
+
+    return notification;
   } catch (error) {
     console.log("Notification error:", error);
   }

@@ -32,7 +32,6 @@ app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/maintenance", require("./routes/maintenanceRoutes"));
 app.use("/api/messages", require("./routes/messageRoutes"));
 
-app.use("/api/notifications", notificationRoutes);
 // ✅ IMPORTANT: create server FIRST
 const http = require("http");
 const server = http.createServer(app);

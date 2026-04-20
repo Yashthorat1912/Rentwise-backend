@@ -11,15 +11,14 @@ exports.createRequest = async (req, res) => {
     console.log("FILES:", req.files);
 
     const { lease_id, title, description, urgency } = req.body;
-
-    const fileNames = req.files ? req.files.map((file) => file.filename) : [];
+    const fileUrls = req.files ? req.files.map((file) => file.path) : [];
 
     const request = await MaintenanceRequest.create({
       lease_id,
       title,
       description,
       urgency,
-      files: fileNames,
+      files: fileUrls,
     });
 
     // ✅ GET RELATED DATA

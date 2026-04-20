@@ -1,5 +1,5 @@
 const admin = require("../config/firebase");
-const Notification = require("../models/notification");
+const Notification = require("../models/Notification");
 
 const sendNotification = async (token, title, body, userId) => {
   if (!token) return;

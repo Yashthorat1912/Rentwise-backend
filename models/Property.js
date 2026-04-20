@@ -16,8 +16,8 @@ const propertySchema = new mongoose.Schema({
     required: true,
   },
 
-  image: {
-    type: String, // will store file path
+  coverImage: {
+    type: String,
   },
 
   landlord_id: {

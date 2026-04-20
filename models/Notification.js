@@ -6,14 +6,18 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    token: {
+      type: String,
+    },
     title: String,
     body: String,
+
     read: {
       type: Boolean,
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 module.exports = mongoose.model("Notification", notificationSchema);

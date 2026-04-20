@@ -16,8 +16,8 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ MARK ALL AS READ
-router.put("/read-all", authMiddleware, async (req, res) => {
+// ✅ MARK ALL AS READ (MATCHES FRONTEND)
+router.put("/read", authMiddleware, async (req, res) => {
   try {
     await Notification.updateMany({ user_id: req.user.id }, { isRead: true });
 
@@ -27,7 +27,7 @@ router.put("/read-all", authMiddleware, async (req, res) => {
   }
 });
 
-// ✅ MARK SINGLE AS READ
+// ✅ MARK SINGLE NOTIFICATION
 router.put("/:id/read", authMiddleware, async (req, res) => {
   try {
     const notification = await Notification.findByIdAndUpdate(
@@ -37,30 +37,6 @@ router.put("/:id/read", authMiddleware, async (req, res) => {
     );
 
     res.json(notification);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ✅ GET UNREAD COUNT (VERY IMPORTANT FOR BELL 🔔)
-router.get("/unread/count", authMiddleware, async (req, res) => {
-  try {
-    const count = await Notification.countDocuments({
-      user_id: req.user.id,
-      isRead: false,
-    });
-
-    res.json({ count });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// ✅ DELETE ALL (optional)
-router.delete("/", authMiddleware, async (req, res) => {
-  try {
-    await Notification.deleteMany({ user_id: req.user.id });
-    res.json({ message: "All notifications deleted" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

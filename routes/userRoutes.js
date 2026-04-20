@@ -6,19 +6,18 @@ const { getTenants } = require("../controllers/userController");
 
 router.get("/tenants", getTenants);
 
-// ✅ ADD THIS
+// ✅ SAVE FCM TOKEN
 router.put("/save-fcm-token", authMiddleware, async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { fcmToken: req.body.token },
-      { new: true },
-    );
+    const { token } = req.body;
 
-    res.json(user);
+    await User.findByIdAndUpdate(req.user.id, {
+      fcmToken: token,
+    });
+
+    res.json({ message: "FCM token saved successfully" });
   } catch (err) {
-    res.status(500).json(err.message);
+    res.status(500).json({ message: err.message });
   }
 });
-
 module.exports = router;
